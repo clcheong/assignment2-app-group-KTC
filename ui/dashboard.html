@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" integrity="sha512-ZnR2wlLbSbr8/c9AgLg3jQPAattCUImNsae6NHYnS9KrIwRdcY9DxFotXhNAKIKbAXlRnujIqUWoXXwqyFOeIQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+  }
+
+  h1 {
+    margin-bottom: 20px;
+  }
+
+  .form-container {
+    margin-bottom: 20px;
+  }
+
+  .user-list {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  .user-list li {
+    margin-bottom: 10px;
+  }
+
+  .error-message {
+    color: red;
+    margin-top: 10px;
+  }
+</style>
+
+<body>
+  <h1>User Dashboard</h1>
+
+  <hr>
+
+  <div>
+    <h2>User List</h2>
+    <ul id="userList"></ul>
+  </div>
+
+  <div>
+    <!-- <h2>Add User</h2> -->
+    <form id="addUserForm">
+      <table>
+        <thead></thead>
+        <tbody>
+          <tr>
+            <th><label for="idInput">ID:</label></th>
+            <td><input type="number" id="idInput" required></td>
+          </tr>
+          <tr>
+            <th><label for="nameInput">Name:</label></th>
+            <td><input type="text" id="nameInput" required></td>
+          </tr>
+          <tr>
+            <td colspan="2">
+              <input type="submit" value="Add User">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </form>
+    <div id="addUserError"></div>
+  </div>
+  <br>
+
+  <hr>
+
+  <div>
+    <h1>Search User</h1>
+
+    <div class="user-details">
+      <label for="userIdInput">User ID:</label>
+      <input type="number" id="userIdInput">
+      <button id="getUserButton">Search</button>
+      <p class="error-message" id="userError"></p>
+      <div id="userDetails"></div>
+    </div>
+  </div>
+
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Get all users and populate the list
+      function getUsers() {
+        $.ajax({
+          url: 'http://localhost:3000/users',
+          type: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          success: function(users) {
+            $('#userList').empty();
+            users.forEach(function(user) {
+              $('#userList').append('<li>' + user.name + ' (ID: ' + user.id + ') <button class="editUserButton" data-id="' + user.id + '"><i class="bi bi-pencil-square"></i></button> <button class="deleteUserButton" data-id="' + user.id + '"><i class="bi bi-trash"></i></button></li>');
+            });
+          }
+        });
+      }
+  
+      getUsers();
+  
+      // Add user form submission
+      $('#addUserForm').submit(function(event) {
+        event.preventDefault();
+        const id = $('#idInput').val();
+        const name = $('#nameInput').val();
+  
+        $.ajax({
+          url: 'http://localhost:3000/users',
+          type: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify({ id: parseInt(id), name: name }),
+          success: function(newUser) {
+            $('#addUserError').empty();
+            $('#idInput').val('');
+            $('#nameInput').val('');
+            getUsers();
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            const errorMessage = jqXHR.responseJSON.error;
+            $('#addUserError').text(errorMessage);
+          }
+        });
+      });
+  
+      // Edit user button click
+      $(document).on('click', '.editUserButton', function() {
+        const userId = $(this).data('id');
+        const newName = prompt('Enter new name for user (ID: ' + userId + '):');
+        if (newName !== null) {
+          $.ajax({
+            url: 'http://localhost:3000/users/' + userId,
+            type: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({ name: newName }),
+            success: function(updatedUser) {
+              getUsers();
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              const errorMessage = jqXHR.responseJSON.error;
+              alert(errorMessage);
+            }
+          });
+        }
+      });
+  
+      // Delete user button click
+      $(document).on('click', '.deleteUserButton', function() {
+        const userId = $(this).data('id');
+        if (confirm('Are you sure you want to delete user with ID: ' + userId + '?')) {
+          $.ajax({
+            url: 'http://localhost:3000/users/' + userId,
+            type: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            success: function(deletedUser) {
+              getUsers();
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              const errorMessage = jqXHR.responseJSON.error;
+              alert(errorMessage);
+            }
+          });
+        }
+      });
+    });
+  </script>
+
+  <script>
+    $(document).ready(function() {
+      $('#getUserButton').click(function() {
+        const userId = $('#userIdInput').val();
+        $('#userError').empty();
+        $('#userDetails').empty();
+
+        $.ajax({
+          url: 'http://localhost:3000/users/' + userId,
+          type: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          success: function(user) {
+            $('#userDetails').html('<p><strong>Name:</strong> ' + user.name + '</p>');
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            const errorMessage = jqXHR.responseJSON.error;
+            $('#userError').text(errorMessage);
+          }
+        });
+      });
+    });
+  </script>
+  
+  
+</body>
+</html>
