@@ -1,6 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
+
+// Design smell 3. To address the lack of versioning, we can introduce versioning in the API endpoints.
+// This way, if there is a need to introduce breaking changes or add new features in the future, a new version endpoint (e.g., /v2/users) can be created without impacting the existing clients relying on the /v1 version.
 const v1Router = require('./routes/v1/users');
 
 app.use(cors());
