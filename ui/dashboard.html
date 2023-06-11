@@ -145,7 +145,7 @@
             headers: {
               'Content-Type': 'application/json'
             },
-            data: JSON.stringify({ name: newName }),
+            data: JSON.stringify({ id: userId, name: newName }),
             success: function(updatedUser) {
               getUsers();
             },

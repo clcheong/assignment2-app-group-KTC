@@ -21,8 +21,8 @@ app.use((req, res, next) => {
 
 // Code Smell 2: Lack of validation
 // Added validation middleware to validate the input data before processing (excluding GET requests).
-app.use('/users', (req, res, next) => {
-  if (req.method === 'GET') {
+app.use('/v1/users', (req, res, next) => {
+  if (req.method === 'GET' || req.method === 'DELETE') {
     // Skip validation for GET requests
     next();
   } else {
