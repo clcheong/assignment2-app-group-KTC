@@ -1,3 +1,5 @@
+// Design Smell 2: Lack of proper separation of concerns
+// Moved the routes, business logic, and data into separate modules.
 const express = require('express');
 const router = express.Router();
 
