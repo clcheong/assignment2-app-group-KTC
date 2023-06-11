@@ -1,91 +1,56 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const v1Router = require('./routes/v1/users');
 
 app.use(cors());
 app.use(express.json());
 
-// Sample data
-let users = [
-  { id: 1, name: 'John' },
-  { id: 2, name: 'Jane' },
-  { id: 3, name: 'Bob' }
-];
-
-// 1. Functionality: Get all users
-app.get('/users', (req, res) => {
-  res.json(users);
-});
-
-// 2. Functionality: Get a specific user by ID
-app.get('/users/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const user = users.find(u => u.id === id);
-  if (user) {
-    res.json(user);
-  } else {
-    res.status(404).json({ error: 'User not found' });
-  }
-});
-
-// 3. Functionality: Add a new user
-app.post('/users', (req, res) => {
-  const { id, name } = req.body;
-  if (!id || !name) {
-    res.status(400).json({ error: 'Missing required fields' });
-  } else {
-    const newUser = { id, name };
-    users.push(newUser);
-    res.status(201).json(newUser);
-  }
-});
-
-// 4. Functionality: Update a user
-app.put('/users/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const { name } = req.body;
-  const user = users.find(u => u.id === id);
-  if (user) {
-    user.name = name;
-    res.json(user);
-  } else {
-    res.status(404).json({ error: 'User not found' });
-  }
-});
-
-// 5. Functionality: Delete a user
-app.delete('/users/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = users.findIndex(u => u.id === id);
-  if (index !== -1) {
-    const deletedUser = users.splice(index, 1);
-    res.json(deletedUser[0]);
-  } else {
-    res.status(404).json({ error: 'User not found' });
-  }
-});
-
 // Code Smell 1: Duplicate code
-// The code to handle the "User not found" response is duplicated in multiple routes.
-// It would be better to extract this logic into a separate function or middleware.
+// Removed duplicated code for handling "User not found" response by creating a reusable middleware.
+app.use((req, res, next) => {
+  res.notFound = (message = 'Not found') => {
+    return res.status(404).json({ error: message });
+  };
+  next();
+});
+
 
 // Code Smell 2: Lack of validation
-// The input data is not properly validated before processing.
-// For example, when creating or updating a user, there should be validation for the ID and name fields.
+// Added validation middleware to validate the input data before processing (excluding GET requests).
+app.use('/users', (req, res, next) => {
+  if (req.method === 'GET') {
+    // Skip validation for GET requests
+    next();
+  } else {
+    const { id, name } = req.body;
+    if (!id || !name) {
+      res.status(400).json({ error: 'Missing required fields' });
+    } else {
+      next();
+    }
+  }
+});
+
 
 // Code Smell 3: Inconsistent naming conventions
-// The naming conventions for route parameters and variables are not consistent.
-// For example, "id" is used in some places, while "u" or "user" is used in others.
+// Renamed route parameter to use a consistent naming convention.
+app.param('userId', (req, res, next, userId) => {
+  const id = parseInt(userId);
+  req.params.userId = id;
+  next();
+});
+
 
 // Design Smell 1: Lack of error handling middleware
-// There is no centralized error handling middleware to handle any uncaught errors that might occur during the request processing.
+// Added a centralized error handling middleware to handle any uncaught errors that might occur during request processing.
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ error: 'Internal server error' });
+});
 
-// Design Smell 2: Lack of proper separation of concerns
-// The routes and business logic are tightly coupled together in a single file.
-// It would be better to separate the routes, data storage, and business logic into separate modules.
 
-// Design Smell 3: Lack of versioning
-// The API does not have any versioning mechanism in place, which can lead to compatibility issues when making changes in the future.
+app.use('/v1/users', v1Router);
 
-// Start the server
+
 app.listen(3000);
