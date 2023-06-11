@@ -18,8 +18,8 @@ app.get('/users', (req, res) => {
 });
 
 // 2. Functionality: Get a specific user by ID
-app.get('/users/:id', (req, res) => {
-  const id = parseInt(req.params.id);
+app.get('/users/:userId', (req, res) => {
+  const id = parseInt(req.params.userId);
   const user = users.find(u => u.id === id);
   if (user) {
     res.json(user);
@@ -41,8 +41,8 @@ app.post('/users', (req, res) => {
 });
 
 // 4. Functionality: Update a user
-app.put('/users/:id', (req, res) => {
-  const id = parseInt(req.params.id);
+app.put('/users/:userId', (req, res) => {
+  const id = parseInt(req.params.userId);
   const { name } = req.body;
   const user = users.find(u => u.id === id);
   if (user) {
@@ -54,8 +54,8 @@ app.put('/users/:id', (req, res) => {
 });
 
 // 5. Functionality: Delete a user
-app.delete('/users/:id', (req, res) => {
-  const id = parseInt(req.params.id);
+app.delete('/users/:userId', (req, res) => {
+  const id = parseInt(req.params.userId);
   const index = users.findIndex(u => u.id === id);
   if (index !== -1) {
     const deletedUser = users.splice(index, 1);
